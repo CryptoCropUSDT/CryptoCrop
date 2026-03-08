@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CryptoGarden Pro - USDT BEP20</title>
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --text: #e6edf3;
+            --gray: #888; --ton-blue: #0088cc; --gold: #f1c40f; --green: #2ecc71; --red: #e74c3c; --usdt: #26a17b;
+        }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 15px; padding-bottom: 120px; user-select: none; }
+        
+        .header-saldos { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #30363d; margin-bottom: 20px; position: sticky; top: 0; z-index: 10; }
+        .billetera-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        .val-billetera { color: var(--usdt); font-size: 22px; font-weight: bold; }
+        .val-campo { color: var(--green); font-size: 32px; font-weight: bold; }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; z-index: 100; }
+        .nav-item { background: none; border: none; color: white; font-weight: bold; opacity: 0.6; font-size: 10px; }
+        .nav-item.active { opacity: 1; color: var(--green); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tablero { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card { background: var(--card); border-radius: 15px; padding: 12px; border: 1px solid #333; text-align: center; position: relative; }
+        
+        .plant-img { font-size: 35px; margin: 5px 0; }
+        .qty-selector { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; background: #0d1117; border-radius: 8px; padding: 5px; }
+        .qty-btn { background: #21262d; border: none; color: white; width: 25px; height: 25px; border-radius: 5px; }
+        .btn-buy { background: var(--usdt); color: white; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 11px; }
+        .btn-info { background: transparent; color: var(--usdt); border: 1px solid var(--usdt); width: 100%; padding: 5px; border-radius: 8px; font-size: 10px; margin-bottom: 8px; font-weight: bold; }
+
+        .action-card { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid #30363d; margin-bottom: 20px; text-align: left; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0d1117; color: white; box-sizing: border-box; }
+        
+        .copy-box { background: #0d1117; padding: 12px; border-radius: 10px; font-size: 10px; word-break: break-all; color: var(--usdt); border: 1px solid #333; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: var(--card); width: 85%; border-radius: 20px; padding: 25px; border: 1px solid var(--usdt); text-align: center; }
+        .mini-progress-bg { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .mini-progress-fill { height: 100%; background: var(--green); width: 0%; }
+    </style>
+</head>
+<body>
+
+    <div class="header-saldos">
+        <div class="billetera-row">
+            <div>
+                <div style="color:var(--gray); font-size:11px;">BILLETERA (USDT)</div>
+                <div class="val-billetera">₮ <span id="bal-billetera">0.00</span></div>
+            </div>
+            <button onclick="switchTab('recarga', document.getElementById('btn-nav-recarga'))" style="background:var(--green); border:none; padding:8px 12px; border-radius:8px; color:white; font-weight:bold;">+ RECARGAR</button>
+        </div>
+        <div style="color:var(--gray); font-size:11px;">GANANCIAS ACUMULADAS</div>
+        <div class="val-campo">₮ <span id="bal-campo">0.000000</span></div>
+        <div style="font-size: 11px; color: var(--gray); margin-top:5px;">⚡ Prod. Actual: ₮ <span id="vel-text" style="color:var(--green)">0.00</span> / h</div>
+    </div>
+
+    <div id="juego" class="tab-content active">
+        <div class="tablero" id="grid-campo"></div>
+        <button style="background: linear-gradient(135deg, var(--green), #27ae60); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 15px; width:100%;" onclick="collectEarnings()">RECOGER GANANCIAS</button>
+    </div>
+
+    <div id="tienda" class="tab-content">
+        <div id="seccion-free" class="action-card" style="border-color: var(--green); text-align: center;">
+            <h4 style="margin: 0; color: var(--green);">🌱 SEMILLA INICIAL</h4>
+            <p style="font-size: 11px; margin: 5px 0;">Gana 1.50 USDT gratis esta semana. (Único uso)</p>
+            <button onclick="claimFreePlant()" style="background: var(--green); border: none; padding: 12px; border-radius: 10px; color: white; font-weight: bold; width: 100%;">RECLAMAR SEMILLA</button>
+        </div>
+        <h3 style="margin: 15px 0 15px 5px;">Tienda de Plantas</h3>
+        <div class="tablero" id="lista-tienda"></div>
+    </div>
+
+    <div id="referidos" class="tab-content">
+        <div class="action-card" style="text-align: center;">
+            <h3>🤝 Amigos</h3>
+            <p style="font-size: 12px; color: var(--gray);">Gana el 0.10% de las inversiones de tus referidos.</p>
+            <div style="background: #0d1117; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px dashed var(--usdt);">
+                <div style="font-size: 11px; color: var(--usdt); word-break: break-all;">t.me/CryptoGarden_bot?start=user123</div>
+            </div>
+            <div style="display: flex; justify-content: space-around; margin-top: 15px;">
+                <div><div style="font-size: 18px; font-weight: bold;">0</div><div style="font-size: 9px;">AMIGOS</div></div>
+                <div><div style="font-size: 18px; font-weight: bold; color:var(--usdt);">₮ <span id="refer-earned">0.00</span></div><div style="font-size: 9px;">GANADO</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="recarga" class="tab-content">
+        <div class="action-card">
+            <h3>Recargar USDT</h3>
+            <p style="font-size: 12px; color: var(--gray);">Envía USDT (Red <b>BEP20</b>) a esta dirección:</p>
+            <div class="copy-box" onclick="copyAddress()">
+                <span id="recharge-address">0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9</span>
+                <span style="font-size: 14px;">📋</span>
+            </div>
+            <input type="number" id="recharge-amount" placeholder="Monto mínimo 1.00 USDT">
+            <button style="background:var(--green); border:none; width:100%; padding:15px; border-radius:12px; color:white; font-weight:bold;" onclick="processRecharge()">CONFIRMAR DEPÓSITO</button>
+        </div>
+    </div>
+
+    <div id="retiro" class="tab-content">
+        <div class="action-card">
+            <h3>Retirar USDT</h3>
+            <input type="text" id="wallet-addr" placeholder="Dirección USDT (BEP20)">
+            <input type="number" id="withdraw-amount" placeholder="Mínimo 1.00 USDT">
+            <div style="background: #1c2128; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between;"><span>Comisión (5%):</span><span>₮ <span id="fee-calc">0.00</span></span></div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; color: var(--green);"><span>Recibes:</span><span>₮ <span id="total-receive">0.00</span></span></div>
+            </div>
+            <button style="background:var(--usdt); border:none; width:100%; padding:15px; border-radius:12px; color:white; font-weight:bold;" onclick="processWithdraw()">SOLICITAR RETIRO</button>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div id="modal-img" style="font-size: 60px;"></div>
+            <h2 id="modal-name" style="margin: 10px 0;"></h2>
+            <p id="modal-desc" style="font-size: 12px; color: var(--gray); line-height: 1.4;"></p>
+            <div id="modal-stats" style="text-align: left; font-size: 13px; background: #0d1117; padding: 15px; border-radius: 12px; margin-top: 15px;">
+                <div id="m-row1"></div>
+                <div id="m-row2"></div>
+                <div id="m-progress" class="mini-progress-bg" style="display:none; height:8px;"><div id="m-fill" class="mini-progress-fill"></div></div>
+            </div>
+            <button onclick="closeModal()" style="background:#333; color:white; border:none; padding:12px; border-radius:10px; margin-top:20px; width:100%;">CERRAR</button>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('juego', this)">🏡 CAMPO</button>
+        <button class="nav-item" onclick="switchTab('tienda', this)">🛒 TIENDA</button>
+        <button class="nav-item" onclick="switchTab('referidos', this)">🤝 AMIGOS</button>
+        <button class="nav-item" id="btn-nav-recarga" onclick="switchTab('recarga', this)">💳 RECARGA</button>
+        <button class="nav-item" onclick="switchTab('retiro', this)">📤 RETIRO</button>
+    </nav>
+
+    <script>
+        let wallet = 0.00, fieldBalance = 0.000000, referEarnings = 0.00;
+        let activePlants = [], freeClaimed = false, selIdx = null;
+        
+        // Economía actualizada: Min 0.25 USDT, Max 1000 USDT (ROI 25% en 7 días)
+        const catálogo = [
+            { id: 0, name: "Brote Mini", price: 0.25, img: "🍃", d: "La opción más económica para probar el campo." },
+            { id: 1, name: "Brote Café", price: 0.50, img: "🌱", d: "Brote resistente para iniciar tu campo." },
+            { id: 11, name: "Brote Verde", price: 1.00, img: "🌿", d: "Planta básica de bajo costo." },
+            { id: 2, name: "Girasol", price: 2.00, img: "🌻", d: "Atrae riqueza con la luz solar." },
+            { id: 3, name: "Cactus Azur", price: 10.00, img: "🌵", d: "Almacena valor en climas difíciles." },
+            { id: 4, name: "Hongo Nocturno", price: 25.00, img: "🍄", d: "Producción constante bajo la luna." },
+            { id: 5, name: "Flor de Loto", price: 50.00, img: "🪷", d: "Pureza y alto rendimiento." },
+            { id: 6, name: "Árbol Sabio", price: 100.00, img: "🌳", d: "Raíces profundas de beneficio." },
+            { id: 7, name: "Planta Carnívora", price: 250.00, img: "🪴", d: "Protege tu inversión con ferocidad." },
+            { id: 8, name: "Bambú Dorado", price: 500.00, img: "🎋", d: "Crecimiento rápido para expertos." },
+            { id: 9, name: "Cristal Floral", price: 750.00, img: "💎", d: "Belleza hecha de puro USDT." },
+            { id: 10, name: "Planta Ancestral", price: 1000.00, img: "🍀", d: "La leyenda definitiva del jardín." }
+        ].map(p => ({ ...p, ph: (p.price*1.25)/168, ps: ((p.price*1.25)/168)/3600 }));
+
+        function initTienda() {
+            const container = document.getElementById('lista-tienda');
+            catálogo.forEach(p => {
+                container.innerHTML += `<div class="card"><div class="plant-img">${p.img}</div><div style="font-weight:bold; font-size:13px;">${p.name}</div><div style="color:var(--usdt); font-weight:bold;">${p.price.toFixed(2)} USDT</div><button class="btn-info" onclick="openShopInfo(${p.id})">Más info</button><div class="qty-selector"><button class="qty-btn" onclick="updateQty(${p.id},-1)">-</button><span id="qty-${p.id}">1</span><button class="qty-btn" onclick="updateQty(${p.id},1)">+</button></div><button class="btn-buy" id="btn-buy-${p.id}" onclick="buyPlant(${p.id})">COMPRAR (${p.price.toFixed(2)} USDT)</button></div>`;
+            });
+        }
+
+        function copyAddress() {
+            const addr = document.getElementById('recharge-address').innerText;
+            navigator.clipboard.writeText(addr).then(() => { alert("Dirección copiada"); });
+        }
+
+        function openShopInfo(id) {
+            const p = catálogo.find(x => x.id === id);
+            document.getElementById('modal-img').innerText = p.img;
+            document.getElementById('modal-name').innerText = p.name;
+            document.getElementById('modal-desc').innerText = p.d;
+            document.getElementById('m-row1').innerHTML = `Precio: <span style="color:var(--usdt)">${p.price.toFixed(2)} USDT</span>`;
+            document.getElementById('m-row2').innerHTML = `Retorno (7d): <span style="color:var(--green)">${(p.price*1.25).toFixed(2)} USDT</span>`;
+            document.getElementById('m-progress').style.display = 'none';
+            document.getElementById('infoModal').style.display = 'flex';
+        }
+
+        function openFieldInfo(i) {
+            selIdx = i; document.getElementById('m-progress').style.display = 'block';
+            document.getElementById('infoModal').style.display = 'flex'; refreshModal();
+        }
+
+        function refreshModal() {
+            const p = activePlants[selIdx]; if(!p || document.getElementById('m-progress').style.display==='none') return;
+            const r = p.expira - Date.now();
+            document.getElementById('modal-img').innerText = p.img;
+            document.getElementById('modal-name').innerText = p.name;
+            document.getElementById('m-row1').innerHTML = `Generado: <span style="color:var(--usdt)">₮ ${p.genTotal.toFixed(4)}</span>`;
+            document.getElementById('m-fill').style.width = Math.max(0, (r/604800000)*100) + "%";
+            const d=Math.floor(r/86400000), h=Math.floor((r/3600000)%24), m=Math.floor((r/60000)%60);
+            document.getElementById('m-row2').innerHTML = `Restante: ${d}d ${h}h ${m}m`;
+        }
+
+        function buyPlant(id) {
+            const p = catálogo.find(x => x.id === id), q = parseInt(document.getElementById(`qty-${id}`).innerText), t = p.price * q;
+            if (wallet >= t) {
+                wallet -= t; referEarnings += t * 0.001; document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
+                for(let i=0; i<q; i++) activePlants.push({ ...p, creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
+                updateUI(); updateCampoUI();
+            } else alert("Saldo insuficiente.");
+        }
+
+        setInterval(() => {
+            let ts=0, th=0; const a=Date.now();
+            activePlants = activePlants.filter(p => {
+                if (a < p.expira) { p.genTotal += p.ps; ts += p.ps; th += p.ph; return true; }
+                return false;
+            });
+            fieldBalance += ts; document.getElementById('bal-campo').innerText = fieldBalance.toFixed(6);
+            document.getElementById('vel-text').innerText = th.toFixed(2);
+            updateCampoUI(); refreshModal();
+        }, 1000);
+
+        function updateCampoUI() {
+            const g = document.getElementById('grid-campo');
+            if (activePlants.length === 0) { g.innerHTML = '<p style="grid-column:1/3; opacity:0.5; padding:20px;">Campo vacío.</p>'; return; }
+            g.innerHTML = "";
+            activePlants.forEach((p, i) => {
+                const perc = Math.max(0, ((p.expira - Date.now())/604800000)*100);
+                g.innerHTML += `<div class="card" onclick="openFieldInfo(${i})"><div class="plant-img">${p.img}</div><div style="font-size:12px; font-weight:bold;">${p.name}</div><div style="color:var(--gold); font-size:10px;">+ ₮ ${p.genTotal.toFixed(4)}</div><div class="mini-progress-bg"><div class="mini-progress-fill" style="width: ${perc}%"></div></div></div>`;
+            });
+        }
+
+        function updateQty(id, ch) {
+            let el = document.getElementById(`qty-${id}`), v = Math.max(1, parseInt(el.innerText)+ch);
+            el.innerText = v; let p = catálogo.find(x => x.id === id);
+            document.getElementById(`btn-buy-${id}`).innerText = `COMPRAR (${(p.price * v).toFixed(2)} USDT)`;
+        }
+
+        document.getElementById('withdraw-amount').addEventListener('input', (e) => {
+            let v = parseFloat(e.target.value) || 0, f = v * 0.05;
+            document.getElementById('fee-calc').innerText = f.toFixed(2);
+            document.getElementById('total-receive').innerText = (v - f).toFixed(2);
+        });
+
+        function claimFreePlant() {
+            if (!freeClaimed) {
+                activePlants.push({ name: "Semilla Inicial", ps: 1.5/604800, ph: 1.5/168, img: "🌱", creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
+                freeClaimed = true; document.getElementById('seccion-free').style.display = 'none'; updateCampoUI();
+            }
+        }
+
+        function collectEarnings() { if (fieldBalance > 0.0001) { wallet += fieldBalance; fieldBalance = 0; updateUI(); } }
+        function updateUI() { document.getElementById('bal-billetera').innerText = wallet.toFixed(2); }
+        function switchTab(t, b) {
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+            document.getElementById(t).classList.add('active'); b.classList.add('active');
+        }
+        function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+        function processRecharge() { let a = parseFloat(document.getElementById('recharge-amount').value); if(a >= 1.0) { wallet += a; updateUI(); alert("Recargado."); } }
+        function processWithdraw() { let a = parseFloat(document.getElementById('withdraw-amount').value); if(a >= 1.0 && a <= wallet) { wallet -= a; updateUI(); alert("Retiro solicitado."); } }
+        
+        initTienda();
+    </script>
+</body>
+</html>
