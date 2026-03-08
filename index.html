@@ -152,7 +152,7 @@
         const db = firebase.database();
         const tg = window.Telegram.WebApp;
         let userId = (tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : "usuario_prueba";
-        document.getElementById('refer-link-text').innerText = "t.me/CryptoGarden_bot?start=" + userId;
+        document.getElementById('refer-link-text').innerText = "t.me/CryptoCropBot?start=" + userId;
         
         let wallet = 0, fieldBalance = 0, referEarnings = 0, activePlants = [], freeClaimed = false, withdraws = [];
 
