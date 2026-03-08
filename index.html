@@ -87,7 +87,7 @@
             <h3>🤝 Amigos</h3>
             <p style="font-size: 12px; color: var(--gray);">Gana el 0.10% de las inversiones de tus referidos.</p>
             <div class="copy-box" onclick="copyReferLink()">
-                <span id="refer-link">Cargando...</span>
+                <span id="refer-link-text">Cargando enlace...</span>
                 <span>📋</span>
             </div>
             <div style="display: flex; justify-content: space-around; margin-top: 15px;">
@@ -146,6 +146,7 @@
     </nav>
 
     <script>
+        // Configuración Firebase (Basada en tus credenciales)
         const firebaseConfig = {
             apiKey: "AIzaSyCOE9TbkNFDVBLwAjhvOqI04u5_z9O_0qM",
             authDomain: "cryptocrop-5e223.firebaseapp.com",
@@ -159,11 +160,16 @@
         const db = firebase.database();
 
         const tg = window.Telegram.WebApp;
+        tg.expand();
         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
-        document.getElementById('refer-link').innerText = "t.me/CryptoGarden_bot?start=" + userId;
+        
+        // Link de referido dinámico
+        const myReferLink = "https://t.me/CryptoGarden_bot?start=" + userId;
+        document.getElementById('refer-link-text').innerText = myReferLink;
 
         let wallet = 0, fieldBalance = 0, referEarnings = 0, activePlants = [], freeClaimed = false, selIdx = null;
 
+        // Carga de datos desde Firebase
         db.ref('users/' + userId).once('value').then((snap) => {
             const d = snap.val();
             if (d) {
@@ -184,6 +190,35 @@
                 freeClaimed: freeClaimed,
                 activePlants: activePlants,
                 referEarnings: referEarnings
+            });
+        }
+
+        // Nueva función de copiado mejorada para enlace de referido
+        function copyReferLink() {
+            const link = document.getElementById('refer-link-text').innerText;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(link).then(() => {
+                    alert("¡Enlace de referido copiado! 🚀");
+                }).catch(err => {
+                    // Fallback si falla el método moderno
+                    const el = document.createElement('textarea');
+                    el.value = link;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    alert("Enlace copiado (fallback) ✅");
+                });
+            } else {
+                alert("Error al copiar. Selecciona el texto manualmente.");
+            }
+        }
+
+        // Función de copiado para dirección de billetera
+        function copyAddress() {
+            const addr = document.getElementById('recharge-address').innerText;
+            navigator.clipboard.writeText(addr).then(() => {
+                alert("Dirección BEP20 copiada ✅");
             });
         }
 
@@ -288,10 +323,9 @@
         function collectEarnings() { if (fieldBalance > 0.0001) { wallet += fieldBalance; fieldBalance = 0; saveData(); updateUI(); } }
         function updateUI() { document.getElementById('bal-billetera').innerText = wallet.toFixed(2); }
         function switchTab(t, b) { document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.getElementById(t).classList.add('active'); }
-        function copyAddress() { navigator.clipboard.writeText("0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9"); alert("Copiado."); }
         function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
-        function processRecharge() { let a = parseFloat(document.getElementById('recharge-amount').value); if(a >= 1.0) { wallet += a; saveData(); updateUI(); alert("OK"); } }
-        function processWithdraw() { let a = parseFloat(document.getElementById('withdraw-amount').value); if(a >= 1.0 && a <= wallet) { wallet -= a; saveData(); updateUI(); alert("Retiro solicitado."); } }
+        function processRecharge() { let a = parseFloat(document.getElementById('recharge-amount').value); if(a >= 1.0) { wallet += a; saveData(); updateUI(); alert("¡Depósito confirmado! ✅"); } }
+        function processWithdraw() { let a = parseFloat(document.getElementById('withdraw-amount').value); if(a >= 1.0 && a <= wallet) { wallet -= a; saveData(); updateUI(); alert("Solicitud de retiro enviada 📤"); } }
 
         initTienda();
     </script>
