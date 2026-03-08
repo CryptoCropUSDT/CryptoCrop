@@ -32,21 +32,22 @@
         .btn-buy { background: var(--usdt); color: white; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 11px; }
         .btn-info { background: transparent; color: var(--usdt); border: 1px solid var(--usdt); width: 100%; padding: 5px; border-radius: 8px; font-size: 10px; margin-bottom: 8px; font-weight: bold; }
 
-        .recharge-container { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid #30363d; }
+        .recharge-container { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid #30363d; margin-bottom: 15px; }
         .address-box { background: #12161c; padding: 15px; border-radius: 12px; border: 1px dashed #474d57; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid #30363d; background: #0b0e11; color: white; box-sizing: border-box; }
 
-        .alert-bep20 { background: rgba(243, 186, 47, 0.1); border: 1px solid var(--gold); padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
-        .alert-bep20 b { color: var(--gold); font-size: 14px; text-transform: uppercase; }
+        .history-item { background: #0d1117; border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--gray); display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+        .status-pending { color: var(--gold); border-color: var(--gold); }
+        .status-done { color: var(--green); border-color: var(--green); }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--card); width: 85%; border-radius: 20px; padding: 25px; border: 1px solid var(--usdt); text-align: center; }
-        
         .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #181a20; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2b3139; z-index: 100; }
         .nav-item { background: none; border: none; color: var(--gray); font-size: 10px; display: flex; flex-direction: column; align-items: center; }
         .nav-item.active { color: var(--green); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: var(--card); width: 85%; border-radius: 20px; padding: 25px; border: 1px solid var(--usdt); text-align: center; }
     </style>
 </head>
 <body>
@@ -89,25 +90,32 @@
     <div id="recarga" class="tab-content">
         <div class="recharge-container">
             <h3>Depositar USDT</h3>
-            <div class="alert-bep20">⚠️ <b>RED BEP20 (BSC)</b></div>
+            <div style="background: rgba(243, 186, 47, 0.1); border: 1px solid var(--gold); padding: 10px; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 11px;">
+                ⚠️ <b>RED BEP20 (BSC) ÚNICAMENTE</b>
+            </div>
             <div class="address-box" onclick="copyAddress()">
                 <span style="font-size:10px; color:var(--gray);">0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9</span><span>📋</span>
             </div>
-            <input type="number" id="recharge-amount" placeholder="Monto">
-            <input type="text" id="tx-hash" placeholder="Hash">
+            <input type="number" id="recharge-amount" placeholder="Monto enviado">
+            <input type="text" id="tx-hash" placeholder="Hash de transacción">
             <button class="btn-main" id="btn-verify" onclick="verificarTransaccion()">VERIFICAR</button>
         </div>
     </div>
 
     <div id="retiro" class="tab-content">
         <div class="recharge-container">
-            <h3>Retirar (5% Comisión)</h3>
-            <input type="number" id="withdraw-amount" placeholder="Monto">
+            <h3>Retirar Fondos</h3>
+            <input type="text" id="wallet-dest" placeholder="Dirección USDT BEP20">
+            <input type="number" id="withdraw-amount" placeholder="Monto (Min 1.00)">
             <div style="background:#12161c; padding:12px; border-radius:10px; font-size:12px;">
-                <div style="display:flex; justify-content:space-between;"><span>Comisión:</span><span style="color:var(--red);">₮ <span id="fee-calc">0.00</span></span></div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Recibes:</span><span style="color:var(--green);">₮ <span id="total-receive">0.00</span></span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Comisión (5%):</span><span style="color:var(--red);">₮ <span id="fee-calc">0.00</span></span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Recibes neto:</span><span style="color:var(--green);">₮ <span id="total-receive">0.00</span></span></div>
             </div>
-            <button class="btn-main" style="margin-top:20px; background:var(--usdt);" onclick="processWithdraw()">SOLICITAR RETIRO</button>
+            <button class="btn-main" style="margin-top:20px; background:var(--usdt);" onclick="processWithdraw()">CONFIRMAR RETIRO</button>
+        </div>
+        <div style="margin-top: 15px;">
+            <h4 style="margin-bottom:10px;">Registro de Retiros</h4>
+            <div id="retiro-history"></div>
         </div>
     </div>
 
@@ -146,20 +154,20 @@
         let userId = (tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : "usuario_prueba";
         document.getElementById('refer-link-text').innerText = "t.me/CryptoGarden_bot?start=" + userId;
         
-        let wallet = 0, fieldBalance = 0, referEarnings = 0, activePlants = [], freeClaimed = false;
+        let wallet = 0, fieldBalance = 0, referEarnings = 0, activePlants = [], freeClaimed = false, withdraws = [];
 
         db.ref('users/' + userId).on('value', (snap) => {
-            const d = snap.val();
-            if (d) {
-                wallet = d.wallet || 0; freeClaimed = d.freeClaimed || false; activePlants = d.activePlants || [];
-                referEarnings = d.referEarnings || 0;
-                document.getElementById('bal-billetera').innerText = wallet.toFixed(2);
-                document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
-                document.getElementById('seccion-free').style.display = !freeClaimed ? 'block' : 'none';
-            }
+            const d = snap.val() || {};
+            wallet = d.wallet || 0; freeClaimed = d.freeClaimed || false; activePlants = d.activePlants || [];
+            referEarnings = d.referEarnings || 0; withdraws = d.withdraws || [];
+            document.getElementById('bal-billetera').innerText = wallet.toFixed(2);
+            document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
+            document.getElementById('seccion-free').style.display = !freeClaimed ? 'block' : 'none';
+            updateWithdrawHistory();
             document.getElementById('loading-screen').style.display = 'none';
         });
 
+        // LAS 12 PLANTAS RESTAURADAS
         const catálogo = [
             { id: 0, name: "Brote Mini", price: 0.25, img: "🍃" },
             { id: 1, name: "Brote Café", price: 0.50, img: "🌱" },
@@ -176,24 +184,125 @@
         ].map(p => ({ ...p, ph: (p.price*1.25)/168, ps: ((p.price*1.25)/168)/3600 }));
 
         function initTienda() {
-            const c = document.getElementById('lista-tienda');
-            c.innerHTML = "";
+            const c = document.getElementById('lista-tienda'); c.innerHTML = "";
             catálogo.forEach(p => {
                 c.innerHTML += `<div class="card">
-                    <div class="plant-img">${p.img}</div><div style="font-weight:bold; font-size:13px;">${p.name}</div>
+                    <div class="plant-img" style="font-size:30px;">${p.img}</div><b>${p.name}</b>
                     <div style="color:var(--usdt); font-weight:bold;">${p.price.toFixed(2)} USDT</div>
                     <button class="btn-info" onclick="openShopInfo(${p.id})">Más info</button>
-                    <div class="qty-selector">
-                        <button class="qty-btn" onclick="updateQty(${p.id},-1)">-</button>
-                        <span id="qty-${p.id}" style="font-weight:bold;">1</span>
-                        <button class="qty-btn" onclick="updateQty(${p.id},1)">+</button>
-                    </div>
-                    <button class="btn-buy" id="btn-buy-${p.id}" onclick="buyPlant(${p.id})">COMPRAR (${p.price.toFixed(2)} USDT)</button>
+                    <div class="qty-selector"><button class="qty-btn" onclick="updateQty(${p.id},-1)">-</button><span id="qty-${p.id}">1</span><button class="qty-btn" onclick="updateQty(${p.id},1)">+</button></div>
+                    <button class="btn-buy" id="btn-buy-${p.id}" onclick="buyPlant(${p.id})">COMPRAR (${p.price.toFixed(2)})</button>
                 </div>`;
             });
         }
 
         function updateQty(id, ch) {
+            let el = document.getElementById(`qty-${id}`), v = Math.max(1, parseInt(el.innerText)+ch);
+            el.innerText = v;
+            const p = catálogo.find(x => x.id === id);
+            document.getElementById(`btn-buy-${id}`).innerText = `COMPRAR (${(p.price*v).toFixed(2)})`;
+        }
+
+        function buyPlant(id) {
+            const p = catálogo.find(x => x.id === id), q = parseInt(document.getElementById(`qty-${id}`).innerText), t = p.price * q;
+            if (wallet >= t) {
+                wallet -= t;
+                for(let i=0; i<q; i++) activePlants.push({ ...p, creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
+                saveData(); alert("¡Compra exitosa!");
+            } else alert("Saldo insuficiente");
+        }
+
+        function processWithdraw() {
+            let amount = parseFloat(document.getElementById('withdraw-amount').value);
+            let address = document.getElementById('wallet-dest').value.trim();
+            if (isNaN(amount) || amount < 1 || address.length < 15) return alert("Datos inválidos");
+            if (amount > wallet) return alert("Saldo insuficiente");
+            wallet -= amount;
+            let newWithdraw = { amount: amount, status: "En proceso", date: new Date().toLocaleDateString() };
+            withdraws.unshift(newWithdraw);
+            saveData();
+            alert("✅ Solicitud enviada.");
+        }
+
+        function updateWithdrawHistory() {
+            const h = document.getElementById('retiro-history'); if(!h) return;
+            h.innerHTML = "";
+            withdraws.forEach(w => {
+                let cls = w.status === "En proceso" ? "status-pending" : "status-done";
+                h.innerHTML += `<div class="history-item ${cls}"><span>${w.date} - ₮${w.amount.toFixed(2)}</span> <b>${w.status}</b></div>`;
+            });
+        }
+
+        setInterval(() => {
+            let ts=0, th=0; const now = Date.now();
+            activePlants = activePlants.filter(p => {
+                if (now < p.expira) { p.genTotal += p.ps; ts += p.ps; th += p.ph; return true; }
+                return false;
+            });
+            fieldBalance += ts; 
+            document.getElementById('bal-campo').innerText = fieldBalance.toFixed(6);
+            document.getElementById('vel-text').innerText = th.toFixed(2);
+            updateCampoUI();
+        }, 1000);
+
+        function updateCampoUI() {
+            const g = document.getElementById('grid-campo'); g.innerHTML = activePlants.length === 0 ? '<p>Campo vacío</p>' : "";
+            activePlants.forEach((p, i) => {
+                const perc = Math.max(0, ((p.expira - Date.now())/604800000)*100);
+                g.innerHTML += `<div class="card" onclick="openFieldInfo(${i})">
+                    <div style="font-size:30px;">${p.img}</div><div style="font-size:10px;">+${p.genTotal.toFixed(4)}</div>
+                    <div class="progress-container"><div class="progress-fill" style="width:${perc}%"></div></div>
+                </div>`;
+            });
+        }
+
+        document.getElementById('withdraw-amount').addEventListener('input', (e) => {
+            let v = parseFloat(e.target.value) || 0;
+            document.getElementById('fee-calc').innerText = (v * 0.05).toFixed(2);
+            document.getElementById('total-receive').innerText = (v * 0.95).toFixed(2);
+        });
+
+        async function verificarTransaccion() {
+            const hash = document.getElementById('tx-hash').value.trim();
+            const amt = parseFloat(document.getElementById('recharge-amount').value);
+            if (hash.length < 40 || isNaN(amt)) return alert("Hash o monto inválido");
+            try {
+                const res = await fetch(`https://api.bscscan.com/api?module=proxy&action=eth_getTransactionReceipt&txhash=${hash}&apikey=6A95UUSV6BNFJ5MPH2DY4UZZ62YEK33PYG`);
+                const data = await res.json();
+                if (data.result && data.result.status === "0x1") {
+                    wallet += amt; saveData(); alert("¡Depósito acreditado!");
+                }
+            } catch (e) { alert("Error al verificar"); }
+        }
+
+        function collectEarnings() { if (fieldBalance > 0.0001) { wallet += fieldBalance; fieldBalance = 0; saveData(); } }
+        function saveData() { db.ref('users/' + userId).set({ wallet, freeClaimed, activePlants, referEarnings, withdraws }); }
+        function switchTab(t, b) { document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.getElementById(t).classList.add('active'); }
+        function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+        function copyAddress() { navigator.clipboard.writeText("0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9"); alert("Copiado ✅"); }
+        function copyReferLink() { navigator.clipboard.writeText(document.getElementById('refer-link-text').innerText); alert("Link copiado ✅"); }
+        function claimFreePlant() { if(!freeClaimed) { activePlants.push({ name: "Regalo", ps: (1.5/604800/3600), ph: 1.5/168, img: "🌱", expira: Date.now() + 604800000, genTotal: 0 }); freeClaimed = true; saveData(); } }
+        function openShopInfo(id) {
+            const p = catálogo.find(x => x.id === id);
+            document.getElementById('modal-img').innerText = p.img;
+            document.getElementById('modal-name').innerText = p.name;
+            document.getElementById('m-row1').innerHTML = `Inversión: ${p.price} USDT`;
+            document.getElementById('m-row2').innerHTML = `Gana: ${(p.price*1.25).toFixed(2)} USDT / 7 días`;
+            document.getElementById('infoModal').style.display = 'flex';
+        }
+        function openFieldInfo(i) {
+            const p = activePlants[i];
+            const h = Math.max(0, Math.floor((p.expira - Date.now())/3600000));
+            document.getElementById('modal-img').innerText = p.img;
+            document.getElementById('modal-name').innerText = p.name;
+            document.getElementById('m-row1').innerHTML = `Ganado: ₮ ${p.genTotal.toFixed(4)}`;
+            document.getElementById('m-row2').innerHTML = `Vida: ${h}h`;
+            document.getElementById('infoModal').style.display = 'flex';
+        }
+        initTienda();
+    </script>
+</body>
+</html>
             let el = document.getElementById(`qty-${id}`);
             let v = Math.max(1, parseInt(el.innerText) + ch);
             el.innerText = v;
