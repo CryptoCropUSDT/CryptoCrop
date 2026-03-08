@@ -14,38 +14,29 @@
             --grad-green: linear-gradient(135deg, #02c076, #00d98b);
         }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding: 15px; padding-bottom: 110px; user-select: none; }
-        
         .header-saldos { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #30363d; margin-bottom: 20px; }
         .val-billetera { color: var(--usdt); font-size: 24px; font-weight: bold; }
         .val-campo { color: var(--green); font-size: 32px; font-weight: bold; }
-
         .tablero { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .card { background: var(--card); border-radius: 16px; padding: 15px; border: 1px solid #2b313a; text-align: center; cursor: pointer; position: relative; }
-        
         .progress-container { width: 100%; height: 6px; background: #0d1117; border-radius: 10px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--grad-green); width: 100%; transition: width 1s linear; }
-
         .qty-selector { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; background: #0d1117; border-radius: 8px; padding: 5px; }
         .qty-btn { background: #2b3139; border: none; color: white; width: 28px; height: 28px; border-radius: 6px; font-weight: bold; }
-        
         .btn-main { background: var(--grad-green); color: #000; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; }
         .btn-buy { background: var(--usdt); color: white; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 11px; }
         .btn-info { background: transparent; color: var(--usdt); border: 1px solid var(--usdt); width: 100%; padding: 5px; border-radius: 8px; font-size: 10px; margin-bottom: 8px; font-weight: bold; }
-
         .recharge-container { background: var(--card); border-radius: 20px; padding: 20px; border: 1px solid #30363d; margin-bottom: 15px; }
         .address-box { background: #12161c; padding: 15px; border-radius: 12px; border: 1px dashed #474d57; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid #30363d; background: #0b0e11; color: white; box-sizing: border-box; }
-
         .history-item { background: #0d1117; border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--gray); display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
         .status-pending { color: var(--gold); border-color: var(--gold); }
         .status-done { color: var(--green); border-color: var(--green); }
-
         .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #181a20; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2b3139; z-index: 100; }
         .nav-item { background: none; border: none; color: var(--gray); font-size: 10px; display: flex; flex-direction: column; align-items: center; }
         .nav-item.active { color: var(--green); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: var(--card); width: 85%; border-radius: 20px; padding: 25px; border: 1px solid var(--usdt); text-align: center; }
     </style>
@@ -89,7 +80,7 @@
 
     <div id="recarga" class="tab-content">
         <div class="recharge-container">
-            <h3>Depositar USDT</h3>
+            <h3>DEPOSITO MINIMO 10 USDT</h3>
             <div style="background: rgba(243, 186, 47, 0.1); border: 1px solid var(--gold); padding: 10px; border-radius: 10px; margin-bottom: 15px; text-align: center; font-size: 11px;">
                 ⚠️ <b>RED BEP20 (BSC) ÚNICAMENTE</b>
             </div>
@@ -97,8 +88,8 @@
                 <span style="font-size:10px; color:var(--gray);">0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9</span><span>📋</span>
             </div>
             <input type="number" id="recharge-amount" placeholder="Monto enviado">
-            <input type="text" id="tx-hash" placeholder="Hash de transacción">
-            <button class="btn-main" id="btn-verify" onclick="verificarTransaccion()">VERIFICAR</button>
+            <input type="text" id="tx-hash" placeholder="Referencia (mínimo 5 dígitos)">
+            <button class="btn-main" id="btn-verify" onclick="verificarSimulado()">VERIFICAR</button>
         </div>
     </div>
 
@@ -112,10 +103,6 @@
                 <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Recibes neto:</span><span style="color:var(--green);">₮ <span id="total-receive">0.00</span></span></div>
             </div>
             <button class="btn-main" style="margin-top:20px; background:var(--usdt);" onclick="processWithdraw()">CONFIRMAR RETIRO</button>
-        </div>
-        <div style="margin-top: 15px;">
-            <h4 style="margin-bottom:10px;">Registro de Retiros</h4>
-            <div id="retiro-history"></div>
         </div>
     </div>
 
@@ -152,22 +139,25 @@
         const db = firebase.database();
         const tg = window.Telegram.WebApp;
         let userId = (tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.id : "usuario_prueba";
-        document.getElementById('refer-link-text').innerText = "t.me/CryptoCropBot?start=" + userId;
+        document.getElementById('refer-link-text').innerText = "t.me/CryptoGarden_bot?start=" + userId;
         
         let wallet = 0, fieldBalance = 0, referEarnings = 0, activePlants = [], freeClaimed = false, withdraws = [];
 
+        // ELIMINAR PANTALLA DE CARGA SIEMPRE A LOS 1.5 SEGUNDOS
+        setTimeout(() => { document.getElementById('loading-screen').style.display = 'none'; }, 1500);
+
         db.ref('users/' + userId).on('value', (snap) => {
             const d = snap.val() || {};
-            wallet = d.wallet || 0; freeClaimed = d.freeClaimed || false; activePlants = d.activePlants || [];
-            referEarnings = d.referEarnings || 0; withdraws = d.withdraws || [];
+            wallet = d.wallet || 0; 
+            freeClaimed = d.freeClaimed || false; 
+            activePlants = d.activePlants || [];
+            referEarnings = d.referEarnings || 0; 
+            withdraws = d.withdraws || [];
             document.getElementById('bal-billetera').innerText = wallet.toFixed(2);
             document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
             document.getElementById('seccion-free').style.display = !freeClaimed ? 'block' : 'none';
-            updateWithdrawHistory();
-            document.getElementById('loading-screen').style.display = 'none';
         });
 
-        // LAS 12 PLANTAS RESTAURADAS
         const catálogo = [
             { id: 0, name: "Brote Mini", price: 0.25, img: "🍃" },
             { id: 1, name: "Brote Café", price: 0.50, img: "🌱" },
@@ -196,6 +186,21 @@
             });
         }
 
+        function verificarSimulado() {
+            const hash = document.getElementById('tx-hash').value.trim();
+            const amt = parseFloat(document.getElementById('recharge-amount').value);
+            const btn = document.getElementById('btn-verify');
+            if (isNaN(amt) || amt < 10) return alert("Monto mínimo 10 USDT");
+            if (hash.length < 5) return alert("Error: La referencia debe tener 5 o más dígitos.");
+            btn.innerText = "VERIFICANDO..."; btn.disabled = true;
+            setTimeout(() => {
+                wallet += amt; saveData();
+                alert("✅ Éxito: Saldo acreditado.");
+                document.getElementById('tx-hash').value = ""; document.getElementById('recharge-amount').value = "";
+                btn.innerText = "VERIFICAR"; btn.disabled = false;
+            }, 2000);
+        }
+
         function updateQty(id, ch) {
             let el = document.getElementById(`qty-${id}`), v = Math.max(1, parseInt(el.innerText)+ch);
             el.innerText = v;
@@ -214,23 +219,10 @@
 
         function processWithdraw() {
             let amount = parseFloat(document.getElementById('withdraw-amount').value);
-            let address = document.getElementById('wallet-dest').value.trim();
-            if (isNaN(amount) || amount < 1 || address.length < 15) return alert("Datos inválidos");
+            if (isNaN(amount) || amount < 1) return alert("Monto inválido");
             if (amount > wallet) return alert("Saldo insuficiente");
             wallet -= amount;
-            let newWithdraw = { amount: amount, status: "En proceso", date: new Date().toLocaleDateString() };
-            withdraws.unshift(newWithdraw);
-            saveData();
-            alert("✅ Solicitud enviada.");
-        }
-
-        function updateWithdrawHistory() {
-            const h = document.getElementById('retiro-history'); if(!h) return;
-            h.innerHTML = "";
-            withdraws.forEach(w => {
-                let cls = w.status === "En proceso" ? "status-pending" : "status-done";
-                h.innerHTML += `<div class="history-item ${cls}"><span>${w.date} - ₮${w.amount.toFixed(2)}</span> <b>${w.status}</b></div>`;
-            });
+            saveData(); alert("✅ Solicitud enviada.");
         }
 
         setInterval(() => {
@@ -256,28 +248,14 @@
             });
         }
 
-        document.getElementById('withdraw-amount').addEventListener('input', (e) => {
-            let v = parseFloat(e.target.value) || 0;
-            document.getElementById('fee-calc').innerText = (v * 0.05).toFixed(2);
-            document.getElementById('total-receive').innerText = (v * 0.95).toFixed(2);
-        });
-
-        async function verificarTransaccion() {
-            const hash = document.getElementById('tx-hash').value.trim();
-            const amt = parseFloat(document.getElementById('recharge-amount').value);
-            if (hash.length < 40 || isNaN(amt)) return alert("Hash o monto inválido");
-            try {
-                const res = await fetch(`https://api.bscscan.com/api?module=proxy&action=eth_getTransactionReceipt&txhash=${hash}&apikey=6A95UUSV6BNFJ5MPH2DY4UZZ62YEK33PYG`);
-                const data = await res.json();
-                if (data.result && data.result.status === "0x1") {
-                    wallet += amt; saveData(); alert("¡Depósito acreditado!");
-                }
-            } catch (e) { alert("Error al verificar"); }
-        }
-
         function collectEarnings() { if (fieldBalance > 0.0001) { wallet += fieldBalance; fieldBalance = 0; saveData(); } }
         function saveData() { db.ref('users/' + userId).set({ wallet, freeClaimed, activePlants, referEarnings, withdraws }); }
-        function switchTab(t, b) { document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.getElementById(t).classList.add('active'); }
+        function switchTab(t, b) { 
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+            document.getElementById(t).classList.add('active');
+            b.classList.add('active');
+        }
         function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
         function copyAddress() { navigator.clipboard.writeText("0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9"); alert("Copiado ✅"); }
         function copyReferLink() { navigator.clipboard.writeText(document.getElementById('refer-link-text').innerText); alert("Link copiado ✅"); }
