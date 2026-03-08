@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CryptoGarden Pro - USDT BEP20</title>
+    <title>CryptoGarden Pro - Cloud Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg: #0d1117; --card: #161b22; --text: #e6edf3;
@@ -26,7 +29,7 @@
         .card { background: var(--card); border-radius: 15px; padding: 12px; border: 1px solid #333; text-align: center; position: relative; }
         
         .plant-img { font-size: 35px; margin: 5px 0; }
-        .qty-selector { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; background: #0d1117; border-radius: 8px; padding: 5px; }
+        .qty-selector { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; background: #0d1117; border-radius: 8px; padding: 5px; }
         .qty-btn { background: #21262d; border: none; color: white; width: 25px; height: 25px; border-radius: 5px; }
         .btn-buy { background: var(--usdt); color: white; border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 11px; }
         .btn-info { background: transparent; color: var(--usdt); border: 1px solid var(--usdt); width: 100%; padding: 5px; border-radius: 8px; font-size: 10px; margin-bottom: 8px; font-weight: bold; }
@@ -35,6 +38,8 @@
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #0d1117; color: white; box-sizing: border-box; }
         
         .copy-box { background: #0d1117; padding: 12px; border-radius: 10px; font-size: 10px; word-break: break-all; color: var(--usdt); border: 1px solid #333; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+        .btn-green { background: var(--green); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .btn-blue { background: var(--usdt); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: var(--card); width: 85%; border-radius: 20px; padding: 25px; border: 1px solid var(--usdt); text-align: center; }
@@ -43,6 +48,11 @@
     </style>
 </head>
 <body>
+
+    <div id="loading-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="font-size:40px;">🌱</div>
+        <p>Sincronizando con la nube...</p>
+    </div>
 
     <div class="header-saldos">
         <div class="billetera-row">
@@ -76,8 +86,9 @@
         <div class="action-card" style="text-align: center;">
             <h3>🤝 Amigos</h3>
             <p style="font-size: 12px; color: var(--gray);">Gana el 0.10% de las inversiones de tus referidos.</p>
-            <div style="background: #0d1117; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px dashed var(--usdt);">
-                <div style="font-size: 11px; color: var(--usdt); word-break: break-all;">t.me/CryptoGarden_bot?start=user123</div>
+            <div class="copy-box" onclick="copyReferLink()">
+                <span id="refer-link">Cargando...</span>
+                <span>📋</span>
             </div>
             <div style="display: flex; justify-content: space-around; margin-top: 15px;">
                 <div><div style="font-size: 18px; font-weight: bold;">0</div><div style="font-size: 9px;">AMIGOS</div></div>
@@ -92,10 +103,10 @@
             <p style="font-size: 12px; color: var(--gray);">Envía USDT (Red <b>BEP20</b>) a esta dirección:</p>
             <div class="copy-box" onclick="copyAddress()">
                 <span id="recharge-address">0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9</span>
-                <span style="font-size: 14px;">📋</span>
+                <span>📋</span>
             </div>
             <input type="number" id="recharge-amount" placeholder="Monto mínimo 1.00 USDT">
-            <button style="background:var(--green); border:none; width:100%; padding:15px; border-radius:12px; color:white; font-weight:bold;" onclick="processRecharge()">CONFIRMAR DEPÓSITO</button>
+            <button class="btn-green" onclick="processRecharge()">CONFIRMAR DEPÓSITO</button>
         </div>
     </div>
 
@@ -108,16 +119,16 @@
                 <div style="display: flex; justify-content: space-between;"><span>Comisión (5%):</span><span>₮ <span id="fee-calc">0.00</span></span></div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; color: var(--green);"><span>Recibes:</span><span>₮ <span id="total-receive">0.00</span></span></div>
             </div>
-            <button style="background:var(--usdt); border:none; width:100%; padding:15px; border-radius:12px; color:white; font-weight:bold;" onclick="processWithdraw()">SOLICITAR RETIRO</button>
+            <button class="btn-blue" onclick="processWithdraw()">SOLICITAR RETIRO</button>
         </div>
     </div>
 
     <div id="infoModal" class="modal">
         <div class="modal-content">
             <div id="modal-img" style="font-size: 60px;"></div>
-            <h2 id="modal-name" style="margin: 10px 0;"></h2>
-            <p id="modal-desc" style="font-size: 12px; color: var(--gray); line-height: 1.4;"></p>
-            <div id="modal-stats" style="text-align: left; font-size: 13px; background: #0d1117; padding: 15px; border-radius: 12px; margin-top: 15px;">
+            <h2 id="modal-name"></h2>
+            <p id="modal-desc" style="font-size: 12px; color: var(--gray);"></p>
+            <div id="modal-stats" style="text-align: left; background:#0d1117; padding:15px; border-radius:12px; margin-top:15px;">
                 <div id="m-row1"></div>
                 <div id="m-row2"></div>
                 <div id="m-progress" class="mini-progress-bg" style="display:none; height:8px;"><div id="m-fill" class="mini-progress-fill"></div></div>
@@ -135,35 +146,104 @@
     </nav>
 
     <script>
-        let wallet = 0.00, fieldBalance = 0.000000, referEarnings = 0.00;
-        let activePlants = [], freeClaimed = false, selIdx = null;
-        
-        // Economía actualizada: Min 0.25 USDT, Max 1000 USDT (ROI 25% en 7 días)
-        const catálogo = [
-            { id: 0, name: "Brote Mini", price: 0.25, img: "🍃", d: "La opción más económica para probar el campo." },
-            { id: 1, name: "Brote Café", price: 0.50, img: "🌱", d: "Brote resistente para iniciar tu campo." },
-            { id: 11, name: "Brote Verde", price: 1.00, img: "🌿", d: "Planta básica de bajo costo." },
-            { id: 2, name: "Girasol", price: 2.00, img: "🌻", d: "Atrae riqueza con la luz solar." },
-            { id: 3, name: "Cactus Azur", price: 10.00, img: "🌵", d: "Almacena valor en climas difíciles." },
-            { id: 4, name: "Hongo Nocturno", price: 25.00, img: "🍄", d: "Producción constante bajo la luna." },
-            { id: 5, name: "Flor de Loto", price: 50.00, img: "🪷", d: "Pureza y alto rendimiento." },
-            { id: 6, name: "Árbol Sabio", price: 100.00, img: "🌳", d: "Raíces profundas de beneficio." },
-            { id: 7, name: "Planta Carnívora", price: 250.00, img: "🪴", d: "Protege tu inversión con ferocidad." },
-            { id: 8, name: "Bambú Dorado", price: 500.00, img: "🎋", d: "Crecimiento rápido para expertos." },
-            { id: 9, name: "Cristal Floral", price: 750.00, img: "💎", d: "Belleza hecha de puro USDT." },
-            { id: 10, name: "Planta Ancestral", price: 1000.00, img: "🍀", d: "La leyenda definitiva del jardín." }
-        ].map(p => ({ ...p, ph: (p.price*1.25)/168, ps: ((p.price*1.25)/168)/3600 }));
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOE9TbkNFDVBLwAjhvOqI04u5_z9O_0qM",
+            authDomain: "cryptocrop-5e223.firebaseapp.com",
+            databaseURL: "https://cryptocrop-5e223-default-rtdb.firebaseio.com",
+            projectId: "cryptocrop-5e223",
+            storageBucket: "cryptocrop-5e223.appspot.com",
+            messagingSenderId: "367138385207",
+            appId: "1:367138385207:web:8c5b1b4d0840e6c5567784"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        function initTienda() {
-            const container = document.getElementById('lista-tienda');
-            catálogo.forEach(p => {
-                container.innerHTML += `<div class="card"><div class="plant-img">${p.img}</div><div style="font-weight:bold; font-size:13px;">${p.name}</div><div style="color:var(--usdt); font-weight:bold;">${p.price.toFixed(2)} USDT</div><button class="btn-info" onclick="openShopInfo(${p.id})">Más info</button><div class="qty-selector"><button class="qty-btn" onclick="updateQty(${p.id},-1)">-</button><span id="qty-${p.id}">1</span><button class="qty-btn" onclick="updateQty(${p.id},1)">+</button></div><button class="btn-buy" id="btn-buy-${p.id}" onclick="buyPlant(${p.id})">COMPRAR (${p.price.toFixed(2)} USDT)</button></div>`;
+        const tg = window.Telegram.WebApp;
+        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
+        document.getElementById('refer-link').innerText = "t.me/CryptoGarden_bot?start=" + userId;
+
+        let wallet = 0, fieldBalance = 0, referEarnings = 0, activePlants = [], freeClaimed = false, selIdx = null;
+
+        db.ref('users/' + userId).once('value').then((snap) => {
+            const d = snap.val();
+            if (d) {
+                wallet = d.wallet || 0;
+                freeClaimed = d.freeClaimed || false;
+                activePlants = d.activePlants || [];
+                referEarnings = d.referEarnings || 0;
+                if (freeClaimed) document.getElementById('seccion-free').style.display = 'none';
+                document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
+                updateUI();
+            }
+            document.getElementById('loading-screen').style.display = 'none';
+        });
+
+        function saveData() {
+            db.ref('users/' + userId).set({
+                wallet: wallet,
+                freeClaimed: freeClaimed,
+                activePlants: activePlants,
+                referEarnings: referEarnings
             });
         }
 
-        function copyAddress() {
-            const addr = document.getElementById('recharge-address').innerText;
-            navigator.clipboard.writeText(addr).then(() => { alert("Dirección copiada"); });
+        const catálogo = [
+            { id: 0, name: "Brote Mini", price: 0.25, img: "🍃", d: "Opción económica." },
+            { id: 1, name: "Brote Café", price: 0.50, img: "🌱", d: "Brote resistente." },
+            { id: 11, name: "Brote Verde", price: 1.00, img: "🌿", d: "Planta básica." },
+            { id: 2, name: "Girasol", price: 2.00, img: "🌻", d: "Atrae riqueza." },
+            { id: 3, name: "Cactus Azur", price: 10.00, img: "🌵", d: "Climas difíciles." },
+            { id: 4, name: "Hongo Nocturno", price: 25.00, img: "🍄", d: "Prod. nocturna." },
+            { id: 5, name: "Flor de Loto", price: 50.00, img: "🪷", d: "Alto rendimiento." },
+            { id: 6, name: "Árbol Sabio", price: 100.00, img: "🌳", d: "Raíces profundas." },
+            { id: 7, name: "Planta Carnívora", price: 250.00, img: "🪴", d: "Protección." },
+            { id: 8, name: "Bambú Dorado", price: 500.00, img: "🎋", d: "Rápido." },
+            { id: 9, name: "Cristal Floral", price: 750.00, img: "💎", d: "Cristal." },
+            { id: 10, name: "Planta Ancestral", price: 1000.00, img: "🍀", d: "Leyenda." }
+        ].map(p => ({ ...p, ph: (p.price*1.25)/168, ps: ((p.price*1.25)/168)/3600 }));
+
+        function initTienda() {
+            const c = document.getElementById('lista-tienda');
+            catálogo.forEach(p => {
+                c.innerHTML += `<div class="card"><div class="plant-img">${p.img}</div><div style="font-size:12px;font-weight:bold;">${p.name}</div><div style="color:var(--usdt);font-weight:bold;">${p.price.toFixed(2)} USDT</div><button class="btn-info" onclick="openShopInfo(${p.id})">Más info</button><div class="qty-selector"><button class="qty-btn" onclick="updateQty(${p.id},-1)">-</button><span id="qty-${p.id}">1</span><button class="qty-btn" onclick="updateQty(${p.id},1)">+</button></div><button class="btn-buy" id="btn-buy-${p.id}" onclick="buyPlant(${p.id})">COMPRAR (${p.price.toFixed(2)} USDT)</button></div>`;
+            });
+        }
+
+        function updateQty(id, ch) {
+            let el = document.getElementById(`qty-${id}`), v = Math.max(1, parseInt(el.innerText)+ch);
+            el.innerText = v; let p = catálogo.find(x => x.id === id);
+            document.getElementById(`btn-buy-${id}`).innerText = `COMPRAR (${(p.price * v).toFixed(2)} USDT)`;
+        }
+
+        function buyPlant(id) {
+            const p = catálogo.find(x => x.id === id), q = parseInt(document.getElementById(`qty-${id}`).innerText), t = p.price * q;
+            if (wallet >= t) {
+                wallet -= t; referEarnings += t * 0.001;
+                document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
+                for(let i=0; i<q; i++) activePlants.push({ ...p, creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
+                saveData(); updateUI(); updateCampoUI();
+            } else alert("Saldo insuficiente.");
+        }
+
+        setInterval(() => {
+            let ts=0, th=0; const a=Date.now();
+            activePlants = activePlants.filter(p => {
+                if (a < p.expira) { p.genTotal += p.ps; ts += p.ps; th += p.ph; return true; }
+                return false;
+            });
+            fieldBalance += ts; document.getElementById('bal-campo').innerText = fieldBalance.toFixed(6);
+            document.getElementById('vel-text').innerText = th.toFixed(2);
+            updateCampoUI(); refreshModal();
+        }, 1000);
+
+        function updateCampoUI() {
+            const g = document.getElementById('grid-campo');
+            if (activePlants.length === 0) { g.innerHTML = '<p style="grid-column:1/3; opacity:0.5; padding:20px;">Campo vacío.</p>'; return; }
+            g.innerHTML = "";
+            activePlants.forEach((p, i) => {
+                const perc = Math.max(0, ((p.expira - Date.now())/604800000)*100);
+                g.innerHTML += `<div class="card" onclick="openFieldInfo(${i})"><div class="plant-img">${p.img}</div><div style="font-size:12px;font-weight:bold;">${p.name}</div><div style="color:var(--usdt);font-size:10px;">+ ₮ ${p.genTotal.toFixed(4)}</div><div class="mini-progress-bg"><div class="mini-progress-fill" style="width: ${perc}%"></div></div></div>`;
+            });
         }
 
         function openShopInfo(id) {
@@ -185,48 +265,18 @@
         function refreshModal() {
             const p = activePlants[selIdx]; if(!p || document.getElementById('m-progress').style.display==='none') return;
             const r = p.expira - Date.now();
-            document.getElementById('modal-img').innerText = p.img;
-            document.getElementById('modal-name').innerText = p.name;
             document.getElementById('m-row1').innerHTML = `Generado: <span style="color:var(--usdt)">₮ ${p.genTotal.toFixed(4)}</span>`;
             document.getElementById('m-fill').style.width = Math.max(0, (r/604800000)*100) + "%";
             const d=Math.floor(r/86400000), h=Math.floor((r/3600000)%24), m=Math.floor((r/60000)%60);
             document.getElementById('m-row2').innerHTML = `Restante: ${d}d ${h}h ${m}m`;
         }
 
-        function buyPlant(id) {
-            const p = catálogo.find(x => x.id === id), q = parseInt(document.getElementById(`qty-${id}`).innerText), t = p.price * q;
-            if (wallet >= t) {
-                wallet -= t; referEarnings += t * 0.001; document.getElementById('refer-earned').innerText = referEarnings.toFixed(4);
-                for(let i=0; i<q; i++) activePlants.push({ ...p, creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
-                updateUI(); updateCampoUI();
-            } else alert("Saldo insuficiente.");
-        }
-
-        setInterval(() => {
-            let ts=0, th=0; const a=Date.now();
-            activePlants = activePlants.filter(p => {
-                if (a < p.expira) { p.genTotal += p.ps; ts += p.ps; th += p.ph; return true; }
-                return false;
-            });
-            fieldBalance += ts; document.getElementById('bal-campo').innerText = fieldBalance.toFixed(6);
-            document.getElementById('vel-text').innerText = th.toFixed(2);
-            updateCampoUI(); refreshModal();
-        }, 1000);
-
-        function updateCampoUI() {
-            const g = document.getElementById('grid-campo');
-            if (activePlants.length === 0) { g.innerHTML = '<p style="grid-column:1/3; opacity:0.5; padding:20px;">Campo vacío.</p>'; return; }
-            g.innerHTML = "";
-            activePlants.forEach((p, i) => {
-                const perc = Math.max(0, ((p.expira - Date.now())/604800000)*100);
-                g.innerHTML += `<div class="card" onclick="openFieldInfo(${i})"><div class="plant-img">${p.img}</div><div style="font-size:12px; font-weight:bold;">${p.name}</div><div style="color:var(--gold); font-size:10px;">+ ₮ ${p.genTotal.toFixed(4)}</div><div class="mini-progress-bg"><div class="mini-progress-fill" style="width: ${perc}%"></div></div></div>`;
-            });
-        }
-
-        function updateQty(id, ch) {
-            let el = document.getElementById(`qty-${id}`), v = Math.max(1, parseInt(el.innerText)+ch);
-            el.innerText = v; let p = catálogo.find(x => x.id === id);
-            document.getElementById(`btn-buy-${id}`).innerText = `COMPRAR (${(p.price * v).toFixed(2)} USDT)`;
+        function claimFreePlant() {
+            if (!freeClaimed) {
+                activePlants.push({ name: "Semilla Inicial", ps: 1.5/604800, ph: 1.5/168, img: "🌱", creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
+                freeClaimed = true; document.getElementById('seccion-free').style.display = 'none';
+                saveData(); updateCampoUI();
+            }
         }
 
         document.getElementById('withdraw-amount').addEventListener('input', (e) => {
@@ -235,24 +285,14 @@
             document.getElementById('total-receive').innerText = (v - f).toFixed(2);
         });
 
-        function claimFreePlant() {
-            if (!freeClaimed) {
-                activePlants.push({ name: "Semilla Inicial", ps: 1.5/604800, ph: 1.5/168, img: "🌱", creada: Date.now(), expira: Date.now()+604800000, genTotal: 0 });
-                freeClaimed = true; document.getElementById('seccion-free').style.display = 'none'; updateCampoUI();
-            }
-        }
-
-        function collectEarnings() { if (fieldBalance > 0.0001) { wallet += fieldBalance; fieldBalance = 0; updateUI(); } }
+        function collectEarnings() { if (fieldBalance > 0.0001) { wallet += fieldBalance; fieldBalance = 0; saveData(); updateUI(); } }
         function updateUI() { document.getElementById('bal-billetera').innerText = wallet.toFixed(2); }
-        function switchTab(t, b) {
-            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-            document.getElementById(t).classList.add('active'); b.classList.add('active');
-        }
+        function switchTab(t, b) { document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.getElementById(t).classList.add('active'); }
+        function copyAddress() { navigator.clipboard.writeText("0xe1f17ae0fd6b17b63969e98ef371c86aedab5bd9"); alert("Copiado."); }
         function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
-        function processRecharge() { let a = parseFloat(document.getElementById('recharge-amount').value); if(a >= 1.0) { wallet += a; updateUI(); alert("Recargado."); } }
-        function processWithdraw() { let a = parseFloat(document.getElementById('withdraw-amount').value); if(a >= 1.0 && a <= wallet) { wallet -= a; updateUI(); alert("Retiro solicitado."); } }
-        
+        function processRecharge() { let a = parseFloat(document.getElementById('recharge-amount').value); if(a >= 1.0) { wallet += a; saveData(); updateUI(); alert("OK"); } }
+        function processWithdraw() { let a = parseFloat(document.getElementById('withdraw-amount').value); if(a >= 1.0 && a <= wallet) { wallet -= a; saveData(); updateUI(); alert("Retiro solicitado."); } }
+
         initTienda();
     </script>
 </body>
